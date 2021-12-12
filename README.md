@@ -116,28 +116,46 @@
 
 ### ▶︎ 임상정보를 수집하는 batch task
 
-- [임상연구 과제정보](https://www.data.go.kr/data/3074271/fileData.do#/API%20%EB%AA%A9%EB%A1%9D/GETuddi%3Acfc19dda-6f75-4c57-86a8-bb9c8b103887) 오픈API를 이용해 주기적으로 데이터를 저장 및 수정하는 batch 기능 구현하였습니다.
-
-- `django-crontab`을 활용해 background batch scheduler를 만들었고 매일 자정시간에 해당 API로 요청을 보냅니다.
-
-- 첫번째 요청의 응답으로 전체 데이터 수량을 확인하고 두번째 요청의 응답으로 전체 데이터를 받아옵니다.
-
-- tasks 테이블의 외래키로 설정된 데이터는 `get_or_create` 메소드로 생성 혹은 선택하고, 존재하지 않는 경우 if문 삼항연산자를 이용해 None 값을 객체에 담습니다.
-
-- 데이터의 고유한 과제번호를 기준으로 이미 존재하는 데이터는 update 해주고, 신규 데이터는 create하여 데이터베이스에 저장합니다. 
-
-  
-
-
 ### ▶︎ 임상정보 검색 API 
-
-### ▶︎ 수집한 임상정보에 대한 API
 
 ### ▶︎ 임상정보 업데이트 리스트 API
 
-- 검색을 실행하는 해당 날짜를 기준으로 최근 7일간 업데이트 된 사실이 있는 임상정보만을 반환합니다.
+- 검색을 실행하는 해당 날짜를 기준으로 최근 7일간 업데이트된 사실이 있는 임상정보만을 반환합니다.
+```
+class TaskListView(View):
+    def get(self, request):
+        try:
+            offset = int(request.GET.get('offset', 0))
+            limit  = int(request.GET.get('limit', 10))
+            now    = datetime.now()
 
+            one_week_list = Task.objects.select_related(
+                'trial_stage', 
+                'department', 
+                'institute', 
+                'scope',
+                'type'
+                ).filter(updated_at__range=[now - timedelta(days=7), now])[offset:offset+limit]
 
+            data = [{
+                'title'            : value.title,
+                'number'           : value.number,
+                'duration'         : value.duration,
+                'number_of_target' : value.number_of_target,
+                'trial_stage'      : value.trial_stage.name if value.trial_stage else '',
+                'department'       : value.department.name if value.department else '',
+                'institute'        : value.institute.name if value.institute else '',
+                'scope'            : value.scope.name if value.scope else '',
+                'type'             : value.type.name if value.type else ''
+            } for value in one_week_list]
+
+            return JsonResponse({'data' : data }, status=200)
+
+        except KeyError :
+            return JsonResponse({'message' : 'KEY_ERROR'}, status=400)
+```
+
+### ▶︎ 수집한 임상정보에 대한 API
 
 ### ▶︎ UnitTest
 
