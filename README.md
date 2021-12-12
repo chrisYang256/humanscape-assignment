@@ -121,39 +121,8 @@
 ### ▶︎ 임상정보 업데이트 리스트 API
 
 - 검색을 실행하는 해당 날짜를 기준으로 최근 7일간 업데이트된 사실이 있는 임상정보만을 반환합니다.
-```
-class TaskListView(View):
-    def get(self, request):
-        try:
-            offset = int(request.GET.get('offset', 0))
-            limit  = int(request.GET.get('limit', 10))
-            now    = datetime.now()
 
-            one_week_list = Task.objects.select_related(
-                'trial_stage', 
-                'department', 
-                'institute', 
-                'scope',
-                'type'
-                ).filter(updated_at__range=[now - timedelta(days=7), now])[offset:offset+limit]
-
-            data = [{
-                'title'            : value.title,
-                'number'           : value.number,
-                'duration'         : value.duration,
-                'number_of_target' : value.number_of_target,
-                'trial_stage'      : value.trial_stage.name if value.trial_stage else '',
-                'department'       : value.department.name if value.department else '',
-                'institute'        : value.institute.name if value.institute else '',
-                'scope'            : value.scope.name if value.scope else '',
-                'type'             : value.type.name if value.type else ''
-            } for value in one_week_list]
-
-            return JsonResponse({'data' : data }, status=200)
-
-        except KeyError :
-            return JsonResponse({'message' : 'KEY_ERROR'}, status=400)
-```
+<img width="871" alt="스크린샷 2021-12-12 오후 8 59 52" src="https://user-images.githubusercontent.com/89192083/145711343-c44ad038-510a-4d0d-a7df-88c259fb4220.png">
 
 ### ▶︎ 수집한 임상정보에 대한 API
 
